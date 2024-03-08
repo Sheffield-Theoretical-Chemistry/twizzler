@@ -44,19 +44,6 @@ def dump_structure(outfile, no_atoms, atomic_numbers, coords, verbose=False):
         
     return
     
-def get_filenames(arglist):
-    """Read commandline string and store the filenames"""
-    filenames = []
-    i = 0
-    while True:
-        if i == len(arglist):
-            break
-        file = arglist[i]
-        if file[0] != "-":  # try to catch any -h or similar
-            filenames.append(file)
-            i += 1
-    return filenames
-
 def new_filename(old_filename, extension='-twizzle.xyz'):
     """Generates a new filename based upon the old one plus an optional extension"""
     file_tuple = splitext(old_filename)
@@ -83,7 +70,7 @@ def imag_freq_check(freqs, verbose=False):
         
     return imag_modes
 
-def parse_orca(orca_file):
+def parse_orca(orca_file, args):
     """Grabs the required information from an ORCA output file"""
     file = ccopen(orca_file)
     try:
@@ -100,7 +87,7 @@ def parse_orca(orca_file):
     atomic_numbers = mol.atomnos
 
     freqs = np.asarray(mol.vibfreqs)
-    imag_modes = imag_freq_check(freqs, verbose=True)
+    imag_modes = imag_freq_check(freqs, verbose=args.verbose)
     normal_modes = np.asarray(mol.vibdisps)
     displacement_modes = []
     for mode in imag_modes:
@@ -109,29 +96,25 @@ def parse_orca(orca_file):
 
     return coords, atomic_numbers, freqs, imag_modes, displacement_modes
 
-def read_and_distort(arglist):
+def read_and_distort(args):
     """Read in the data from the output file and distort the structure"""
-    filenames = get_filenames(arglist)
-    new_files = []
-    for file in filenames:
-        new_files.append(new_filename(file))
-    #Only work with one file for now
-    if len(filenames) > 1:
-        print("Sorry, need to specify one file at a time!")
-        sys.exit()
+    filename = args.orca_file
+    new_files = new_filename(filename)
         
-    coords, atomic_numbers, freqs, imag_modes, displacement_modes = parse_orca(filenames[0])
+    coords, atomic_numbers, freqs, imag_modes, displacement_modes = parse_orca(filename, args)
     no_atoms = len(atomic_numbers)
 
     for mode in displacement_modes:
         coords = twizzle(coords, mode)
-    dump_structure(new_files[0], no_atoms, atomic_numbers, coords, verbose=True)
+    dump_structure(new_files, no_atoms, atomic_numbers, coords, verbose=args.verbose)
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("orca_file", help="The ORCA output file to be processed")
+    parser.add_argument("-v", "--verbose", help="increase output verbosity",
+                        action="store_true")
     args = parser.parse_args()
-        
-    read_and_distort(sys.argv[1:])
+
+    read_and_distort(args)
         
