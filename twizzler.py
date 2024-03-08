@@ -110,7 +110,7 @@ def read_and_distort(args):
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Distort a chemical system along a normal mode")
     parser.add_argument("orca_file", help="The ORCA output file to be processed")
     parser.add_argument("-v", "--verbose", help="increase output verbosity",
                         action="store_true")
