@@ -40,7 +40,6 @@ def dump_structure(outfile, no_atoms, atomic_numbers, coords, verbose=False):
     if verbose:
         print("\nThe distorted structure is:")
         print(new_xyz)
-        print("\n")
     
     with open(outfile, 'w') as file:
         if verbose:
@@ -131,8 +130,9 @@ def read_and_distort(arglist):
     coords, atomic_numbers, freqs, imag_modes, displacement_modes = parse_orca(filenames[0])
     no_atoms = len(atomic_numbers)
     #Need to change logic here for more than one mode
-    new_struc = twizzle(coords, displacement_modes[0])
-    dump_structure(new_files[0], no_atoms, atomic_numbers, new_struc, verbose=True)
+    for mode in displacement_modes:
+        coords = twizzle(coords, mode)
+    dump_structure(new_files[0], no_atoms, atomic_numbers, coords, verbose=True)
 
 if __name__ == "__main__":
 
