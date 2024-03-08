@@ -5,6 +5,7 @@ from cclib.io import ccopen
 import numpy as np
 from os.path import splitext
 import sys
+import argparse
 
 # Orca uses DA to signify dummy atoms
 periodic_symbols = ["DA", "H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne", 
@@ -19,11 +20,6 @@ periodic_symbols = ["DA", "H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne",
                     "Fr", "Ra", "Ac", "Th", "Pa", "U", "Np", "Pu", "Am", "Cm", "Bk", "Cf", "Es", "Fm", "Md", "No", "Lr", 
                     "Rf", "Db", "Sg", "Bh", "Hs", "Mt", "Ds", "Rg", "Cn", 
                     "Nh", "Fl", "Mc", "Lv", "Ts", "Og" ]
-
-def usage():
-    """print usage information"""
-    print("Usage:")
-    print("  twizzler.py orca_output_file")
 
 def twizzle(structure, norm_mode, scaler=1.0):
     """Distorts a structure along the normal mode by a factor of scaler"""
@@ -115,9 +111,6 @@ def parse_orca(orca_file):
 
 def read_and_distort(arglist):
     """Read in the data from the output file and distort the structure"""
-    if len(arglist) == 0:
-        usage()
-        return []
     filenames = get_filenames(arglist)
     new_files = []
     for file in filenames:
@@ -136,9 +129,9 @@ def read_and_distort(arglist):
 
 if __name__ == "__main__":
 
-    if len(sys.argv) == 1 or sys.argv[1] == "-h" or sys.argv[1] == "--help":
-        usage()
-        sys.exit()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("orca_file", help="The ORCA output file to be processed")
+    args = parser.parse_args()
         
     read_and_distort(sys.argv[1:])
         
