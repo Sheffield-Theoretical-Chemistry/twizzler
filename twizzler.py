@@ -21,8 +21,10 @@ periodic_symbols = ["DA", "H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne",
                     "Rf", "Db", "Sg", "Bh", "Hs", "Mt", "Ds", "Rg", "Cn", 
                     "Nh", "Fl", "Mc", "Lv", "Ts", "Og" ]
 
-def twizzle(structure, norm_mode, scaler=1.0):
+def twizzle(structure, norm_mode, scaler=1.0, verbose=False):
     """Distorts a structure along the normal mode by a factor of scaler"""
+    if verbose:
+        print("Using the sacle factor:", scaler)
     distorted_structure = structure.copy()
     distorted_structure = distorted_structure + (scaler*norm_mode)
 
@@ -105,7 +107,7 @@ def read_and_distort(args):
     no_atoms = len(atomic_numbers)
 
     for mode in displacement_modes:
-        coords = twizzle(coords, mode)
+        coords = twizzle(coords, mode, scaler=args.scale, verbose=args.verbose)
     dump_structure(new_files, no_atoms, atomic_numbers, coords, verbose=args.verbose)
 
 if __name__ == "__main__":
@@ -114,7 +116,9 @@ if __name__ == "__main__":
     parser.add_argument("orca_file", help="The ORCA output file to be processed")
     parser.add_argument("-v", "--verbose", help="increase output verbosity",
                         action="store_true")
+    parser.add_argument("-s", "--scale", help="scale factor to use in distortion, default value is 1.0",
+                        type=float, default=1.0)
     args = parser.parse_args()
-
+    
     read_and_distort(args)
         
