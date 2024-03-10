@@ -30,7 +30,7 @@ def twizzle(structure, norm_mode, scaler=1.0, verbose=False):
 
     return distorted_structure.reshape(-1, 3)
     
-def dump_structure(outfile, no_atoms, atomic_numbers, coords, verbose=False):
+def dump_structure(outfile, no_atoms, atomic_numbers, coords, verbose=False, dryrun=False):
     """Writes out an XYZ format file to outfile"""
     new_xyz = '{}\nTwizzled structure\n'.format(no_atoms)
     for label, coord in zip(atomic_numbers, coords):
@@ -39,10 +39,11 @@ def dump_structure(outfile, no_atoms, atomic_numbers, coords, verbose=False):
         print("\nThe distorted structure is:")
         print(new_xyz)
     
-    with open(outfile, 'w') as file:
-        if verbose:
-            print("Writing distorted structure to file:", outfile)
-        file.write(new_xyz)
+    if not dryrun:
+        with open(outfile, 'w') as file:
+            if verbose:
+                print("Writing distorted structure to file:", outfile)
+            file.write(new_xyz)
         
     return
     
@@ -108,7 +109,7 @@ def read_and_distort(args):
 
     for mode in displacement_modes:
         coords = twizzle(coords, mode, scaler=args.scale, verbose=args.verbose)
-    dump_structure(new_files, no_atoms, atomic_numbers, coords, verbose=args.verbose)
+    dump_structure(new_files, no_atoms, atomic_numbers, coords, verbose=args.verbose, dryrun=args.dryrun)
 
 if __name__ == "__main__":
 
@@ -116,10 +117,13 @@ if __name__ == "__main__":
     parser.add_argument("orca_file", help="The ORCA output file to be processed")
     parser.add_argument("-v", "--verbose", help="increase output verbosity",
                         action="store_true")
+    parser.add_argument("-d", "--dryrun", help="prevents the writing of the output xyz file, should be used with --verbose",
+                        action="store_true")
     parser.add_argument("-s", "--scale", help="scale factor to use in distortion, default value is 1.0",
                         type=float, default=1.0)
     parser.add_argument("-o", "--output", help="string to append to the filename for the output xyz file, default is twizzle.xyz",
                         default='twizzle.xyz')
+
     args = parser.parse_args()
     
     read_and_distort(args)
