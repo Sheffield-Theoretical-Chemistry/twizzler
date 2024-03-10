@@ -34,7 +34,7 @@ def dump_structure(outfile, no_atoms, atomic_numbers, coords, verbose=False, dry
     """Writes out an XYZ format file to outfile"""
     new_xyz = '{}\nTwizzled structure\n'.format(no_atoms)
     for label, coord in zip(atomic_numbers, coords):
-        new_xyz += '{} {:.6f} {:.6f} {:.6f}\n'.format(periodic_symbols[label], *coord)
+        new_xyz += '{:2} {:9.6f} {:9.6f} {:9.6f}\n'.format(periodic_symbols[label], *coord)
     if verbose:
         print("\nThe distorted structure is:")
         print(new_xyz)
