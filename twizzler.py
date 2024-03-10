@@ -46,10 +46,10 @@ def dump_structure(outfile, no_atoms, atomic_numbers, coords, verbose=False):
         
     return
     
-def new_filename(old_filename, extension='-twizzle.xyz'):
+def new_filename(old_filename, extension='twizzle.xyz'):
     """Generates a new filename based upon the old one plus an optional extension"""
     file_tuple = splitext(old_filename)
-    new_xyz_file = file_tuple[0]+extension
+    new_xyz_file = file_tuple[0]+'-'+extension
 
     return new_xyz_file
 
@@ -101,7 +101,7 @@ def parse_orca(orca_file, args):
 def read_and_distort(args):
     """Read in the data from the output file and distort the structure"""
     filename = args.orca_file
-    new_files = new_filename(filename)
+    new_files = new_filename(filename, extension=args.output)
         
     coords, atomic_numbers, freqs, imag_modes, displacement_modes = parse_orca(filename, args)
     no_atoms = len(atomic_numbers)
@@ -118,6 +118,8 @@ if __name__ == "__main__":
                         action="store_true")
     parser.add_argument("-s", "--scale", help="scale factor to use in distortion, default value is 1.0",
                         type=float, default=1.0)
+    parser.add_argument("-o", "--output", help="string to append to the filename for the output xyz file, default is twizzler.xyz",
+                        default='twizzler.xyz')
     args = parser.parse_args()
     
     read_and_distort(args)
