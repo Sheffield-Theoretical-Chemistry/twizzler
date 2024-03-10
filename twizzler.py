@@ -118,8 +118,8 @@ if __name__ == "__main__":
                         action="store_true")
     parser.add_argument("-s", "--scale", help="scale factor to use in distortion, default value is 1.0",
                         type=float, default=1.0)
-    parser.add_argument("-o", "--output", help="string to append to the filename for the output xyz file, default is twizzler.xyz",
-                        default='twizzler.xyz')
+    parser.add_argument("-o", "--output", help="string to append to the filename for the output xyz file, default is twizzle.xyz",
+                        default='twizzle.xyz')
     args = parser.parse_args()
     
     read_and_distort(args)
