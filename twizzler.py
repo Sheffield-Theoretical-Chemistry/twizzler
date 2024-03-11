@@ -176,18 +176,25 @@ def imag_freq_check(freqs, verbose=False):
     """Checks for imaginary frequencies and returns a list of which normal modes these correspond to"""
     num_imag_freqs = 0
     imag_modes = []
+    first_print = True
     for f_num, freq in enumerate(freqs):
         if freq < 0:
-            if verbose:
-                print("Found imaginary frequency:", freq)
+            if first_print:
+                first_print = False
+                if verbose:
+                    print("Summary of imaginary frequencies found")
+                    print("======================================")
             num_imag_freqs += 1
+            if verbose:
+                counter = str(num_imag_freqs) + '.'
+                print(counter, "imaginary frequency:", freq)
             imag_modes.append(f_num)
 
     if num_imag_freqs == 0:
         print("No imaginary modes found, stopping.")
         sys.exit()
     elif verbose:
-        print("Total number of imaginary frequencies is:", num_imag_freqs)
+        print("\nTotal number of imaginary frequencies is:", num_imag_freqs, "\n")
 
     return imag_modes
 
