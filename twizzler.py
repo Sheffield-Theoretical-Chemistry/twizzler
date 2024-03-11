@@ -247,10 +247,17 @@ def read_and_distort(args):
         for mode in displacement_modes:
             coords = twizzle(coords, mode, scaler=args.scale, verbose=args.verbose)
     else:
-        print("Not all modes selected")
+        print("Not all modes selected.\n")
         for mode in selected_modes:
             print("Displacing along selected mode", mode)
             actual_mode = int(mode) - 1
+            if actual_mode not in imag_modes:
+                print(
+                    "Error, the selected mode",
+                    actual_mode + 1,
+                    "is not an imaginary mode.",
+                )
+                sys.exit()
             coords = twizzle(
                 coords,
                 displacement_modes[actual_mode],
