@@ -261,6 +261,7 @@ def weight_mode(structure, norm_mode, atomic_numbers, freq):
     # Flatten the normal mode
     mode = np.asarray(norm_mode).reshape(-1, structure.shape[0] * 3)
     fc = abs(freq) * abs(freq) * (mode * mode * masses) / 16.9744 / 100
+    # Put it back together
     fc = fc.reshape(-1, 3)
 
     return fc
@@ -404,7 +405,6 @@ def read_and_distort(args):
             )
     else:
         print("Not all modes selected.\n")
-        # TODO: pass the frequency here too.
         for mode in selected_modes:
             print("Displacing along selected mode", mode)
             actual_mode = int(mode) - 1
@@ -422,6 +422,7 @@ def read_and_distort(args):
                 scaler=args.scale,
                 verbose=args.verbose,
                 weight=args.weight,
+                freq=freqs[actual_mode],
             )
     dump_structure(
         new_files,
