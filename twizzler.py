@@ -176,18 +176,25 @@ def imag_freq_check(freqs, verbose=False):
     """Checks for imaginary frequencies and returns a list of which normal modes these correspond to"""
     num_imag_freqs = 0
     imag_modes = []
+    first_print = True
     for f_num, freq in enumerate(freqs):
         if freq < 0:
-            if verbose:
-                print("Found imaginary frequency:", freq)
+            if first_print:
+                first_print = False
+                if verbose:
+                    print("Summary of imaginary frequencies found")
+                    print("======================================")
             num_imag_freqs += 1
+            if verbose:
+                counter = str(num_imag_freqs) + "."
+                print(counter, "imaginary frequency:", freq)
             imag_modes.append(f_num)
 
     if num_imag_freqs == 0:
         print("No imaginary modes found, stopping.")
         sys.exit()
     elif verbose:
-        print("Total number of imaginary frequencies is:", num_imag_freqs)
+        print("\nTotal number of imaginary frequencies is:", num_imag_freqs, "\n")
 
     return imag_modes
 
@@ -210,6 +217,11 @@ def parse_orca(orca_file, args):
         print("The error is: ", error)
     atomic_numbers = mol.atomnos
 
+    if args.modes is None:
+        selected_modes = "all"
+    else:
+        selected_modes = args.modes.split(",")
+
     freqs = np.asarray(mol.vibfreqs)
     imag_modes = imag_freq_check(freqs, verbose=args.verbose)
     normal_modes = np.asarray(mol.vibdisps)
@@ -218,7 +230,7 @@ def parse_orca(orca_file, args):
         displacement_modes.append(normal_modes[mode])
     displacement_modes = np.array(displacement_modes)
 
-    return coords, atomic_numbers, freqs, imag_modes, displacement_modes
+    return coords, atomic_numbers, freqs, imag_modes, displacement_modes, selected_modes
 
 
 def read_and_distort(args):
@@ -226,13 +238,32 @@ def read_and_distort(args):
     filename = args.orca_file
     new_files = new_filename(filename, extension=args.output)
 
-    coords, atomic_numbers, freqs, imag_modes, displacement_modes = parse_orca(
-        filename, args
+    coords, atomic_numbers, freqs, imag_modes, displacement_modes, selected_modes = (
+        parse_orca(filename, args)
     )
     no_atoms = len(atomic_numbers)
 
-    for mode in displacement_modes:
-        coords = twizzle(coords, mode, scaler=args.scale, verbose=args.verbose)
+    if selected_modes == "all":
+        for mode in displacement_modes:
+            coords = twizzle(coords, mode, scaler=args.scale, verbose=args.verbose)
+    else:
+        print("Not all modes selected.\n")
+        for mode in selected_modes:
+            print("Displacing along selected mode", mode)
+            actual_mode = int(mode) - 1
+            if actual_mode not in imag_modes:
+                print(
+                    "Error, the selected mode",
+                    actual_mode + 1,
+                    "is not an imaginary mode.",
+                )
+                sys.exit()
+            coords = twizzle(
+                coords,
+                displacement_modes[actual_mode],
+                scaler=args.scale,
+                verbose=args.verbose,
+            )
     dump_structure(
         new_files,
         no_atoms,
@@ -270,6 +301,11 @@ if __name__ == "__main__":
         "--output",
         help="string to append to the filename for the output xyz file, default is twizzle.xyz",
         default="twizzle.xyz",
+    )
+    parser.add_argument(
+        "-m",
+        "--modes",
+        help="optional comma separated list of imaginary modes to distort along",
     )
 
     args = parser.parse_args()
