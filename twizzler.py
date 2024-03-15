@@ -132,46 +132,155 @@ periodic_symbols = [
 ]
 
 element_masses = [
-  # from IUPAC 2021 Table https://iupac.qmul.ac.uk/AtWt/
-  0, 1.00784, 4.0026,
-  6.94, 9.01218, 10.81, 12.011, 14.007, 15.999, 18.9984, 20.1797,
-  22.9898, 24.305, 26.9815,
-  28.085, 30.9738, 32.06, 35.45, 39.95, 39.0983, 40.078,
-  44.9559, 47.867, 50.9415, 51.9961, 54.938, 55.845, 58.9332,
-  58.6934, 63.546, 65.38, 69.723, 72.63, 74.9216, 78.971,
-  79.904, 83.798, 85.4678, 87.62, 88.9058, 91.224, 92.9064,
-  95.95, 97, 101.07, 102.9055, 106.42, 107.8682, 112.414,
-  114.818, 118.71, 121.76, 127.6, 126.9045, 131.293, 132.9055,
-  137.327, 138.9055, 140.116, 140.9077, 144.242, 145, 150.36,
-  151.964, 157.25, 158.9253, 162.5, 164.9303, 167.259, 168.9342,
-  173.045, 174.9668, 178.486, 180.9479, 183.84, 186.207, 190.23,
-  192.217, 195.084, 196.9666, 200.592, 204.38, 207.2, 208.9804,
-  209, 210, 222, 223, 226, 227, 232.0377,
-  231.0358, 238.0289, 237, 244, 243, 247, 247,
-  251, 252, 257, 258, 259, 262, 267,
-  270, 269, 270, 270, 278, 281, 281,
-  285, 286, 289, 289, 293, 293, 294 ]
+    # from IUPAC 2021 Table https://iupac.qmul.ac.uk/AtWt/
+    0,
+    1.00784,
+    4.0026,
+    6.94,
+    9.01218,
+    10.81,
+    12.011,
+    14.007,
+    15.999,
+    18.9984,
+    20.1797,
+    22.9898,
+    24.305,
+    26.9815,
+    28.085,
+    30.9738,
+    32.06,
+    35.45,
+    39.95,
+    39.0983,
+    40.078,
+    44.9559,
+    47.867,
+    50.9415,
+    51.9961,
+    54.938,
+    55.845,
+    58.9332,
+    58.6934,
+    63.546,
+    65.38,
+    69.723,
+    72.63,
+    74.9216,
+    78.971,
+    79.904,
+    83.798,
+    85.4678,
+    87.62,
+    88.9058,
+    91.224,
+    92.9064,
+    95.95,
+    97,
+    101.07,
+    102.9055,
+    106.42,
+    107.8682,
+    112.414,
+    114.818,
+    118.71,
+    121.76,
+    127.6,
+    126.9045,
+    131.293,
+    132.9055,
+    137.327,
+    138.9055,
+    140.116,
+    140.9077,
+    144.242,
+    145,
+    150.36,
+    151.964,
+    157.25,
+    158.9253,
+    162.5,
+    164.9303,
+    167.259,
+    168.9342,
+    173.045,
+    174.9668,
+    178.486,
+    180.9479,
+    183.84,
+    186.207,
+    190.23,
+    192.217,
+    195.084,
+    196.9666,
+    200.592,
+    204.38,
+    207.2,
+    208.9804,
+    209,
+    210,
+    222,
+    223,
+    226,
+    227,
+    232.0377,
+    231.0358,
+    238.0289,
+    237,
+    244,
+    243,
+    247,
+    247,
+    251,
+    252,
+    257,
+    258,
+    259,
+    262,
+    267,
+    270,
+    269,
+    270,
+    270,
+    278,
+    281,
+    281,
+    285,
+    286,
+    289,
+    289,
+    293,
+    293,
+    294,
+]
+
 
 def weight_mode(structure, norm_mode, atomic_numbers, freq):
     """Converts the normal mode to mass-weighted force constants"""
     masses = np.asarray([element_masses[i] for i in atomic_numbers]).repeat(3)
     # Flatten the normal mode
-    mode = np.asarray(norm_mode).reshape(-1, structure.shape[0]*3)
-    print("Frequency is", freq)
-    fc = abs(freq) * abs(freq) * (mode * mode * masses) / 16.9744
-    fc = fc.reshape(-1,3)
-    print(fc)
+    mode = np.asarray(norm_mode).reshape(-1, structure.shape[0] * 3)
+    fc = abs(freq) * abs(freq) * (mode * mode * masses) / 16.9744 / 100
+    fc = fc.reshape(-1, 3)
 
     return fc
 
-def twizzle(structure, norm_mode, atomic_numbers, scaler=1.0, verbose=False, weight=False, freq=None):
+
+def twizzle(
+    structure,
+    norm_mode,
+    atomic_numbers,
+    scaler=1.0,
+    verbose=False,
+    weight=False,
+    freq=None,
+):
     """Distorts a structure along the normal mode by a factor of scaler"""
     if verbose:
         print("Using the sacle factor:", scaler)
         if weight:
             print("Using mass-weighted force constants")
     distorted_structure = structure.copy()
-    print(norm_mode)
     if weight:
         fc = weight_mode(structure, norm_mode, atomic_numbers, freq)
         distorted_structure = distorted_structure + (scaler * fc)
@@ -284,7 +393,15 @@ def read_and_distort(args):
 
     if selected_modes == "all":
         for count, mode in enumerate(displacement_modes):
-            coords = twizzle(coords, mode, atomic_numbers, scaler=args.scale, verbose=args.verbose, weight=args.weight, freq=freqs[count])
+            coords = twizzle(
+                coords,
+                mode,
+                atomic_numbers,
+                scaler=args.scale,
+                verbose=args.verbose,
+                weight=args.weight,
+                freq=freqs[count],
+            )
     else:
         print("Not all modes selected.\n")
         # TODO: pass the frequency here too.
@@ -304,7 +421,7 @@ def read_and_distort(args):
                 atomic_numbers,
                 scaler=args.scale,
                 verbose=args.verbose,
-                weight=args.weight
+                weight=args.weight,
             )
     dump_structure(
         new_files,
