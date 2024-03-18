@@ -291,12 +291,33 @@ def twizzle(
     return distorted_structure.reshape(-1, 3)
 
 
+def internuc_distance(atom1, atom2):
+    """Calculates the distance between two atoms"""
+    atom1 = np.array([float(x) for x in atom1]).reshape(-1, 3)
+    atom2 = np.array([float(x) for x in atom2]).reshape(-1, 3)
+    distance = np.linalg.norm(atom1 - atom2)
+
+    return distance
+
+
 def check_geom(atomic_numbers, coords):
     """Performs sanity checks on the system geometry and prints a warning if anything appears unusual"""
     problem = False
 
+    # Compute the distance matrix for the system
+    n_atoms = len(atomic_numbers)
+    dist_matrix = np.zeros((n_atoms, n_atoms))
+    for i in range(n_atoms):
+        for j in range(i, n_atoms):
+            dist_matrix[i, j] = internuc_distance(coords[i], coords[j])
+            dist_matrix[j, i] = dist_matrix[i, j]
+    print(dist_matrix)
+
     if problem:
         print("Warning: unusual geometry detected, please check carefully")
+    # TODO remove this OK print statement once happy
+    else:
+        print("Geometry looks OK")
 
     return
 
