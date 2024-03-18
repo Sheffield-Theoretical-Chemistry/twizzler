@@ -15,6 +15,8 @@ The script uses Python's argparse module so that it can act as a command line ut
 
 will provide an overview of the command line flags available. The default operation is "silent" in that only a new xyz file is produced, with no other output to STDOUT. Use the ``-v`` flag for verbose output, which is handy if you want to select a subset of the imaginary modes to distort along.
 
+The standard mode of operation applies ORCA's printed normal mode(s) to the system's XYZ coordinates, with an optional scaling value set with ``-s``. There is a somewhat experimental option to use mass-weighted force constants for the displacement with the command line option ``-w``. Again, this the optional scaling factor can be applied.
+
 ## Contributing
 
 Contributions are welcome! Please raise Issues or Pull requests on this repo.
