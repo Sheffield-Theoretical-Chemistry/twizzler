@@ -303,6 +303,9 @@ def internuc_distance(atom1, atom2):
 def check_geom(atomic_numbers, coords):
     """Performs sanity checks on the system geometry and prints a warning if anything appears unusual"""
     problem = False
+    short_distance = False
+    # Minimum internuclear distance before throwing a warning
+    min_dist = 0.5
 
     # Compute the distance matrix for the system
     n_atoms = len(atomic_numbers)
@@ -311,6 +314,8 @@ def check_geom(atomic_numbers, coords):
         for j in range(i, n_atoms):
             dist_matrix[i, j] = internuc_distance(coords[i], coords[j])
             dist_matrix[j, i] = dist_matrix[i, j]
+            if i != j and dist_matrix[i, j] <= min_dist:
+                short_distance = True
     print(dist_matrix)
 
     if problem:
@@ -318,6 +323,8 @@ def check_geom(atomic_numbers, coords):
     # TODO remove this OK print statement once happy
     else:
         print("Geometry looks OK")
+    if short_distance:
+        print("Warning: short internuclear separation detected")
 
     return
 
