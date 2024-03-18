@@ -254,6 +254,130 @@ element_masses = [
     294,
 ]
 
+covalent_radii = [
+    # Data from Cordeo08 https://doi.org/10.1039/B801115J - up to and including Cm
+    # If multiple values are given in the above reference, the greatest value is included here
+    # Heavier elements from Pyykko09 https://doi.org/10.1002/chem.200800987 
+    0,
+    0.31,
+    0.28,
+    1.28,
+    0.96,
+    0.84,
+    0.76,
+    0.71,
+    0.66,
+    0.57,
+    0.58,
+    1.66,
+    1.41,
+    1.21,
+    1.11,
+    1.07,
+    1.05,
+    1.02,
+    1.06,
+    2.03,
+    1.76,
+    1.70,
+    1.60,
+    1.53,
+    1.39,
+    1.61,
+    1.52,
+    1.50,
+    1.24,
+    1.32,
+    1.22,
+    1.22,
+    1.20,
+    1.19,
+    1.20,
+    1.20,
+    1.16,
+    2.20,
+    1.95,
+    1.90,
+    1.75,
+    1.64,
+    1.54,
+    1.47,
+    1.46,
+    1.42,
+    1.39,
+    1.45,
+    1.44,
+    1.42,
+    1.39,
+    1.39,
+    1.38,
+    1.39,
+    1.40,
+    2.44,
+    2.15,
+    2.07,
+    2.04,
+    2.03,
+    2.01,
+    1.99,
+    1.98,
+    1.98,
+    1.96,
+    1.94,
+    1.92,
+    1.92,
+    1.89,
+    1.90,
+    1.87,
+    1.87,
+    1.75,
+    1.70,
+    1.62,
+    1.51,
+    1.44,
+    1.41,
+    1.36,
+    1.36,
+    1.32,
+    1.45,
+    1.46,
+    1.48,
+    1.40,
+    1.50,
+    1.50,
+    2.60,
+    2.21,
+    2.15,
+    2.06,
+    2.00,
+    1.96,
+    1.90,
+    1.87,
+    1.80,
+    1.69,
+    1.68,
+    1.68,
+    1.65,
+    1.67,
+    1.73,
+    1.76,
+    1.61,
+    1.57,
+    1.49,
+    1.43,
+    1.41,
+    1.34,
+    1.29,
+    1.28,
+    1.21,
+    1.22,
+    1.36,
+    1.43,
+    1.62,
+    1.75,
+    1.65,
+    1.57
+]
 
 def weight_mode(structure, norm_mode, atomic_numbers, freq):
     """Converts the normal mode to mass-weighted force constants"""
@@ -299,6 +423,15 @@ def internuc_distance(atom1, atom2):
 
     return distance
 
+def cov_radii(atom_type1, atom_type2):
+    """Returns the sum of the covalent radii for the two atoms"""
+    return covalent_radii[atom_type1] + covalent_radii[atom_type2]
+
+
+def percent_cov_radii(actual_distance, sum_cov_radii):
+    """Returns the distance as a percentage of the sum of covalent radii"""
+    return actual_distance / sum_cov_radii
+
 
 def check_geom(atomic_numbers, coords):
     """Performs sanity checks on the system geometry and prints a warning if anything appears unusual"""
@@ -306,16 +439,27 @@ def check_geom(atomic_numbers, coords):
     short_distance = False
     # Minimum internuclear distance before throwing a warning
     min_dist = 0.5
+    # If distance is below this percentage of the sum of covalent radii, maybe there is a bond
+    bonding_thresh = 1.5
 
     # Compute the distance matrix for the system
     n_atoms = len(atomic_numbers)
     dist_matrix = np.zeros((n_atoms, n_atoms))
     for i in range(n_atoms):
+        num_bonds = 0
         for j in range(i, n_atoms):
             dist_matrix[i, j] = internuc_distance(coords[i], coords[j])
             dist_matrix[j, i] = dist_matrix[i, j]
-            if i != j and dist_matrix[i, j] <= min_dist:
-                short_distance = True
+            if i != j: 
+                if dist_matrix[i, j] <= min_dist:
+                    short_distance = True
+                # TODO the following logic needs moving as it does not traverse the whole matrix    
+                sum_cov_radii = cov_radii(atomic_numbers[i], atomic_numbers[j])
+                print("Sum of covalent radii:", sum_cov_radii)
+                percen_cov = percent_cov_radii(dist_matrix[i, j], sum_cov_radii)
+                print("Percent of sum of covalent radii:", percen_cov)
+                if percen_cov <= bonding_thresh: num_bonds += 1
+        print("Possible number of bonds for atom", i, "is", num_bonds)
     print(dist_matrix)
 
     if problem:
