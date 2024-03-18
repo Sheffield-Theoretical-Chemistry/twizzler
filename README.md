@@ -1,9 +1,9 @@
 # Twizzler
-A Python program that distorts a chemical system along the imagainary (vibrational) normal modes, based on an ORCA output file.
+A Python program that distorts a chemical system along the imaginary (vibrational) normal modes, based on an ORCA output file.
 
 ## Installation
 
-Currently you can just download the script (or clone the repo) and run it. The main dependices are listed in the ``requirements.txt``.
+Currently you can just download the script (or clone the repo) and run it. The main dependencies are listed in the ``requirements.txt``.
 
 Note that Twizzler requires cclib for the parsing of the ORCA output. The current cclib (1.8.1) errors when attempting to read ORCA files where minimal printing has been turned on, I've been able to bypass this by adapting the changes suggested in this [PR for aiida-orca](https://github.com/ezpzbz/aiida-orca/pull/67).
 
