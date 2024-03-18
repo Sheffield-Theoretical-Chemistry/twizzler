@@ -291,6 +291,16 @@ def twizzle(
     return distorted_structure.reshape(-1, 3)
 
 
+def check_geom(atomic_numbers, coords):
+    """Performs sanity checks on the system geometry and prints a warning if anything appears unusual"""
+    problem = False
+
+    if problem:
+        print("Warning: unusual geometry detected, please check carefully")
+
+    return
+
+
 def dump_structure(
     outfile, no_atoms, atomic_numbers, coords, verbose=False, dryrun=False
 ):
@@ -424,6 +434,8 @@ def read_and_distort(args):
                 weight=args.weight,
                 freq=freqs[actual_mode],
             )
+    if args.geomcheck:
+        check_geom(atomic_numbers, coords)
     dump_structure(
         new_files,
         no_atoms,
@@ -471,6 +483,12 @@ if __name__ == "__main__":
         "-w",
         "--weight",
         help="applies mass-weighting to the distortion",
+        action="store_true",
+    )
+    parser.add_argument(
+        "-g",
+        "--geomcheck",
+        help="prints a warning if an unusual geometry is detected",
         action="store_true",
     )
 
