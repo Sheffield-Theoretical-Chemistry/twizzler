@@ -466,35 +466,49 @@ def percent_cov_radii(actual_distance, sum_cov_radii):
     return actual_distance / sum_cov_radii
 
 
+def cov_bond_check(atomic_numbers, distance_matrix, bond_thresh=1.5):
+    """Returns the number of unattached atoms in the chemical system
+    This is based on calculating the sum of the covalent radii (single bonds)
+    for each combination of atoms and checking if the actual distance falls within
+    bond_thresh (default of 1.5) of that value."""
+    unattached = 0
+    # As max covalent radius is 2.6, we can define a maximum distance
+    max_dist = 5.2 + bond_thresh
+    for atom, col in enumerate(distance_matrix.T):
+        attach_atoms = 0
+        #        print("For the atom with Z =", atomic_numbers[atom])
+        for second_atom, distance in enumerate(col):
+            # Skip the self-distance
+            if second_atom != atom and distance <= max_dist:
+                sum_cov_radii = cov_radii(
+                    atomic_numbers[atom], atomic_numbers[second_atom]
+                )
+                percen_cov = percent_cov_radii(distance, sum_cov_radii)
+                #                print("Sum cov is", sum_cov_radii, "distance is", distance, "Percen cov is", percen_cov)
+                if percen_cov <= bond_thresh:
+                    attach_atoms += 1
+        #        print("Assuming there are", attach_atoms, "atoms attached to this atom")
+        if attach_atoms == 0:
+            unattached += 1
+
+    return unattached
+
+
 def check_geom(atomic_numbers, coords):
     """Performs sanity checks on the system geometry and prints a warning if anything appears unusual"""
-    problem = False
-    # If distance is below this percentage of the sum of covalent radii, maybe there is a bond
-    bonding_thresh = 1.5
 
-    # Compute the distance matrix for the system
     n_atoms = len(atomic_numbers)
-    #    dist_matrix = np.zeros((n_atoms, n_atoms))
-    #    for i in range(n_atoms):
-    #        num_bonds = 0
-    #        for j in range(i, n_atoms):
-    #            dist_matrix[i, j] = internuc_distance(coords[i], coords[j])
-    #            dist_matrix[j, i] = dist_matrix[i, j]
-    #            if i != j:
-    #                # TODO the following logic needs moving as it does not traverse the whole matrix
-    #                # Pass the distance matrix to a function for this analysis
-    #                sum_cov_radii = cov_radii(atomic_numbers[i], atomic_numbers[j])
-    #                print("Sum of covalent radii:", sum_cov_radii)
-    #                percen_cov = percent_cov_radii(dist_matrix[i, j], sum_cov_radii)
-    #                print("Percent of sum of covalent radii:", percen_cov)
-    #                if percen_cov <= bonding_thresh: num_bonds += 1
-    #        print("Possible number of bonds for atom", i, "is", num_bonds)
     dist_matrix = dist_mat(n_atoms, coords)
-    print(dist_matrix)
+    #    print(dist_matrix)
     short_dist_logical = short_dist_check(dist_matrix)
+    unattached = cov_bond_check(atomic_numbers, dist_matrix)
 
-    if problem:
-        print("Warning: unusual geometry detected, please check carefully")
+    if unattached != 0:
+        print(
+            "Warning:",
+            unattached,
+            "unattached atom(s) detected, please check carefully",
+        )
     # TODO remove this OK print statement once happy
     else:
         print("Geometry looks OK")
