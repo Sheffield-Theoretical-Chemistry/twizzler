@@ -257,7 +257,7 @@ element_masses = [
 covalent_radii = [
     # Data from Cordeo08 https://doi.org/10.1039/B801115J - up to and including Cm
     # If multiple values are given in the above reference, the greatest value is included here
-    # Heavier elements from Pyykko09 https://doi.org/10.1002/chem.200800987 
+    # Heavier elements from Pyykko09 https://doi.org/10.1002/chem.200800987
     0,
     0.31,
     0.28,
@@ -376,8 +376,9 @@ covalent_radii = [
     1.62,
     1.75,
     1.65,
-    1.57
+    1.57,
 ]
+
 
 def weight_mode(structure, norm_mode, atomic_numbers, freq):
     """Converts the normal mode to mass-weighted force constants"""
@@ -423,6 +424,38 @@ def internuc_distance(atom1, atom2):
 
     return distance
 
+
+def dist_mat(num_atoms, coords):
+    """Returns the distance matrix for the atoms within the system"""
+    dist_matrix = np.zeros((num_atoms, num_atoms))
+    for i in range(num_atoms):
+        for j in range(i, num_atoms):
+            dist_matrix[i, j] = internuc_distance(coords[i], coords[j])
+            dist_matrix[j, i] = dist_matrix[i, j]
+
+    return dist_matrix
+
+
+def upper_triangle(full_matrix):
+    """Returns the upper triangle of a matrix without the lead diagonal"""
+    m = full_matrix.shape[0]
+    rows, columns = np.triu_indices(m, 1)
+
+    return full_matrix[rows, columns]
+
+
+def short_dist_check(dist_matrix, min_dist=0.5):
+    """Checks a distance matrix for short internuclear distances.
+    Returns a logical determining if short distances were detected"""
+    short_distance = False
+    unique_distances = upper_triangle(dist_matrix)
+    for dist in unique_distances:
+        if dist <= min_dist:
+            short_distance = True
+
+    return short_distance
+
+
 def cov_radii(atom_type1, atom_type2):
     """Returns the sum of the covalent radii for the two atoms"""
     return covalent_radii[atom_type1] + covalent_radii[atom_type2]
@@ -436,38 +469,36 @@ def percent_cov_radii(actual_distance, sum_cov_radii):
 def check_geom(atomic_numbers, coords):
     """Performs sanity checks on the system geometry and prints a warning if anything appears unusual"""
     problem = False
-    short_distance = False
-    # Minimum internuclear distance before throwing a warning
-    min_dist = 0.5
     # If distance is below this percentage of the sum of covalent radii, maybe there is a bond
     bonding_thresh = 1.5
 
     # Compute the distance matrix for the system
     n_atoms = len(atomic_numbers)
-    dist_matrix = np.zeros((n_atoms, n_atoms))
-    for i in range(n_atoms):
-        num_bonds = 0
-        for j in range(i, n_atoms):
-            dist_matrix[i, j] = internuc_distance(coords[i], coords[j])
-            dist_matrix[j, i] = dist_matrix[i, j]
-            if i != j: 
-                if dist_matrix[i, j] <= min_dist:
-                    short_distance = True
-                # TODO the following logic needs moving as it does not traverse the whole matrix    
-                sum_cov_radii = cov_radii(atomic_numbers[i], atomic_numbers[j])
-                print("Sum of covalent radii:", sum_cov_radii)
-                percen_cov = percent_cov_radii(dist_matrix[i, j], sum_cov_radii)
-                print("Percent of sum of covalent radii:", percen_cov)
-                if percen_cov <= bonding_thresh: num_bonds += 1
-        print("Possible number of bonds for atom", i, "is", num_bonds)
+    #    dist_matrix = np.zeros((n_atoms, n_atoms))
+    #    for i in range(n_atoms):
+    #        num_bonds = 0
+    #        for j in range(i, n_atoms):
+    #            dist_matrix[i, j] = internuc_distance(coords[i], coords[j])
+    #            dist_matrix[j, i] = dist_matrix[i, j]
+    #            if i != j:
+    #                # TODO the following logic needs moving as it does not traverse the whole matrix
+    #                # Pass the distance matrix to a function for this analysis
+    #                sum_cov_radii = cov_radii(atomic_numbers[i], atomic_numbers[j])
+    #                print("Sum of covalent radii:", sum_cov_radii)
+    #                percen_cov = percent_cov_radii(dist_matrix[i, j], sum_cov_radii)
+    #                print("Percent of sum of covalent radii:", percen_cov)
+    #                if percen_cov <= bonding_thresh: num_bonds += 1
+    #        print("Possible number of bonds for atom", i, "is", num_bonds)
+    dist_matrix = dist_mat(n_atoms, coords)
     print(dist_matrix)
+    short_dist_logical = short_dist_check(dist_matrix)
 
     if problem:
         print("Warning: unusual geometry detected, please check carefully")
     # TODO remove this OK print statement once happy
     else:
         print("Geometry looks OK")
-    if short_distance:
+    if short_dist_logical:
         print("Warning: short internuclear separation detected")
 
     return
