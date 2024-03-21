@@ -466,11 +466,11 @@ def percent_cov_radii(actual_distance, sum_cov_radii):
     return actual_distance / sum_cov_radii
 
 
-def cov_bond_check(atomic_numbers, distance_matrix, bond_thresh=1.5):
+def cov_bond_check(atomic_numbers, distance_matrix, bond_thresh=1.3):
     """Returns the number of unattached atoms in the chemical system
     This is based on calculating the sum of the covalent radii (single bonds)
     for each combination of atoms and checking if the actual distance falls within
-    bond_thresh (default of 1.5) of that value."""
+    bond_thresh (default of 1.3) of that value."""
     unattached = 0
     # As max covalent radius is 2.6, we can define a maximum distance
     max_dist = 5.2 + bond_thresh
@@ -509,9 +509,6 @@ def check_geom(atomic_numbers, coords):
             unattached,
             "unattached atom(s) detected, please check carefully",
         )
-    # TODO remove this OK print statement once happy
-    else:
-        print("Geometry looks OK")
     if short_dist_logical:
         print("Warning: short internuclear separation detected")
 
