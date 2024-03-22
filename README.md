@@ -17,6 +17,8 @@ will provide an overview of the command line flags available. The default operat
 
 The standard mode of operation applies ORCA's printed normal mode(s) to the system's XYZ coordinates, with an optional scaling value set with ``-s``. There is a somewhat experimental option to use mass-weighted force constants for the displacement with the command line option ``-w``. Again, this the optional scaling factor can be applied.
 
+Invoking the command line option ``-g`` runs some basic geometry sanity checks on the distorted structure and prints warnings to STDOUT if any of these fail. The sanity checks include detecting short internuclear distances and any atoms that appear to be unattached to any other atom.
+
 ## Contributing
 
 Contributions are welcome! Please raise Issues or Pull requests on this repo.
