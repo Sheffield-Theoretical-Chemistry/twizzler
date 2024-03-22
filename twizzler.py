@@ -628,9 +628,11 @@ def read_and_distort(args):
                 freq=freqs[count],
             )
     else:
-        print("Not all modes selected.\n")
+        if args.verbose:
+            print("Not all modes selected.\n")
         for mode in selected_modes:
-            print("Displacing along selected mode", mode)
+            if args.verbose:
+                print("Displacing along selected mode", mode)
             actual_mode = int(mode) - 1
             if actual_mode not in imag_modes:
                 print(
