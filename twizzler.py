@@ -403,7 +403,7 @@ def twizzle(
 ):
     """Distorts a structure along the normal mode by a factor of scaler"""
     if verbose:
-        print("Using the sacle factor:", scaler)
+        print("Using the scale factor:", scaler)
         if weight:
             print("Using mass-weighted force constants")
     distorted_structure = structure.copy()
@@ -512,7 +512,7 @@ def check_geom(atomic_numbers, coords):
     if short_dist_logical:
         print("Warning: short internuclear separation detected")
 
-    return
+    return unattached, short_dist_logical
 
 
 def dump_structure(
@@ -572,6 +572,62 @@ def imag_freq_check(freqs, verbose=False):
     return imag_modes
 
 
+def geom_sanity(num_unattached, short_dist):
+    """Returns a logical if geometry sanity criteria appear to be OK"""
+    if num_unattached == 0 and short_dist == False:
+        geom_ok = True
+    else:
+        geom_ok = False
+
+    return geom_ok
+
+
+def adaptive_twizzle(
+    structure,
+    norm_mode,
+    atomic_numbers,
+    scaler=4.0,
+    verbose=False,
+    weight=False,
+    freq=None,
+):
+    """Distorts a structure along the normal mode by a factor of scaler
+    If geometry sanity checks are not passed, the value of scaler is automatically
+    reduced in steps of 0.5 until they pass"""
+    if verbose:
+        print("Adaptive scaling mode with a starting scale factor:", scaler)
+        if weight:
+            print("Using mass-weighted force constants")
+    distorted_structure = structure.copy()
+    starting_structure = structure.copy()
+
+    # Intialise geometry checks flags with failing values for first run
+    num_unattached = -1
+    short_dist = True
+    geom_ok = geom_sanity(num_unattached, short_dist)
+
+    while not geom_ok:
+        # Distort, then check the geometry.
+        if scaler == 0.0:
+            print("Adaptive scaler unable to locate a suitable geometry.")
+            print("Stopping.")
+            sys.exit()
+        if weight:
+            fc = weight_mode(starting_structure, norm_mode, atomic_numbers, freq)
+            distorted_structure = starting_structure + (scaler * fc)
+        else:
+            distorted_structure = starting_structure + (scaler * norm_mode)
+        # Check if geometry is OK
+        num_unattached, short_dist = check_geom(atomic_numbers, distorted_structure)
+        geom_ok = geom_sanity(num_unattached, short_dist)
+        if not geom_ok:
+            scaler += -0.5
+            if verbose:
+                print("Reducing scale factor to", scaler)
+
+    return distorted_structure.reshape(-1, 3)
+
+
 def parse_orca(orca_file, args):
     """Grabs the required information from an ORCA output file"""
     file = ccopen(orca_file)
@@ -629,8 +685,15 @@ def read_and_distort(args):
                     freq=freqs[count],
                 )
             else:
-                print("Adaptive mode not yet implemented")
-                sys.exit()
+                coords = adaptive_twizzle(
+                    coords,
+                    mode,
+                    atomic_numbers,
+                    scaler=args.scale,
+                    verbose=args.verbose,
+                    weight=args.weight,
+                    freq=freqs[count],
+                )
     else:
         if args.verbose:
             print("Not all modes selected.\n")
@@ -656,10 +719,18 @@ def read_and_distort(args):
                     freq=freqs[actual_mode],
                 )
             else:
-                print("Adaptive mode not yet implemented")
-                sys.exit()
+                coords = adaptive_twizzle(
+                    coords,
+                    displacement_modes[actual_mode],
+                    atomic_numbers,
+                    scaler=args.scale,
+                    verbose=args.verbose,
+                    weight=args.weight,
+                    freq=freqs[actual_mode],
+                )
     if not args.adaptive and args.geomcheck:
-        check_geom(atomic_numbers, coords)
+        # Adaptive scaler has already checked the geometry
+        num_unattached, short_dist = check_geom(atomic_numbers, coords)
     dump_structure(
         new_files,
         no_atoms,
