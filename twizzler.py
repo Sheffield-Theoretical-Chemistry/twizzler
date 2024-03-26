@@ -618,15 +618,19 @@ def read_and_distort(args):
 
     if selected_modes == "all":
         for count, mode in enumerate(displacement_modes):
-            coords = twizzle(
-                coords,
-                mode,
-                atomic_numbers,
-                scaler=args.scale,
-                verbose=args.verbose,
-                weight=args.weight,
-                freq=freqs[count],
-            )
+            if not args.adaptive:
+                coords = twizzle(
+                    coords,
+                    mode,
+                    atomic_numbers,
+                    scaler=args.scale,
+                    verbose=args.verbose,
+                    weight=args.weight,
+                    freq=freqs[count],
+                )
+            else:
+                print("Adaptive mode not yet implemented")
+                sys.exit()
     else:
         if args.verbose:
             print("Not all modes selected.\n")
@@ -641,16 +645,20 @@ def read_and_distort(args):
                     "is not an imaginary mode.",
                 )
                 sys.exit()
-            coords = twizzle(
-                coords,
-                displacement_modes[actual_mode],
-                atomic_numbers,
-                scaler=args.scale,
-                verbose=args.verbose,
-                weight=args.weight,
-                freq=freqs[actual_mode],
-            )
-    if args.geomcheck:
+            if not args.adaptive:
+                coords = twizzle(
+                    coords,
+                    displacement_modes[actual_mode],
+                    atomic_numbers,
+                    scaler=args.scale,
+                    verbose=args.verbose,
+                    weight=args.weight,
+                    freq=freqs[actual_mode],
+                )
+            else:
+                print("Adaptive mode not yet implemented")
+                sys.exit()
+    if not args.adaptive and args.geomcheck:
         check_geom(atomic_numbers, coords)
     dump_structure(
         new_files,
@@ -705,6 +713,12 @@ if __name__ == "__main__":
         "-g",
         "--geomcheck",
         help="prints a warning if an unusual geometry is detected",
+        action="store_true",
+    )
+    parser.add_argument(
+        "-a",
+        "--adaptive",
+        help="reduces the scale factor until all geometry sanity checks pass",
         action="store_true",
     )
 
