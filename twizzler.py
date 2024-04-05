@@ -600,6 +600,9 @@ def adaptive_twizzle(
             print("Using mass-weighted force constants")
     distorted_structure = structure.copy()
     starting_structure = structure.copy()
+    neg_scale = False
+    if scaler <= 0:
+        neg_scale = True
 
     # Intialise geometry checks flags with failing values for first run
     num_unattached = -1
@@ -621,9 +624,12 @@ def adaptive_twizzle(
         num_unattached, short_dist = check_geom(atomic_numbers, distorted_structure)
         geom_ok = geom_sanity(num_unattached, short_dist)
         if not geom_ok:
-            scaler += -0.5
+            if neg_scale:
+                scaler += 0.5
+            else:
+                scaler += -0.5
             if verbose:
-                print("Reducing scale factor to", scaler)
+                print("Adjusting scale factor to", scaler)
 
     return distorted_structure.reshape(-1, 3)
 
